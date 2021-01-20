@@ -6,7 +6,9 @@ var session = require('express-session');
 var bodyParser = require('body-parser');
 var path = require('path');
 var app = express();
-var mysql = require('mysql')
+var mysql = require('mysql');
+const { rename } = require('fs');
+const { render } = require('ejs');
 app.use(express.static(path.join(__dirname, 'assets')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -127,11 +129,11 @@ app.get('/products', function(req, res) {
                     "price": results[0][i].Price
                 })
             }
-            res.render('product');
+            res.render('product', { inventory: inventory });
         }
     })
 });
-app.post('/orderdata', function(req, res) {
+app.get('/product', function(req, res) {
     var date = new Date();
     var product_id = req.query.productid;
     if (req.session.loggedin) {
@@ -162,10 +164,7 @@ app.post('/orderdata', function(req, res) {
                             'failure': 'order insert unsucessfull'
                         });
                     } else {
-                        res.send({
-                            'code': 401,
-                            'sucess': "Entry Sucessfull"
-                        });
+                        res.redirect('shipping')
                     }
                 });
             }
@@ -212,8 +211,11 @@ app.get('/order', function(req, res) {
     }
 
 });
+app.get('/product/shipping', function(req, res) {
+    res.render('shipping');
+})
 
-app.get('/shipping', function(req, res) {
+app.get('/shippin', function(req, res) {
     var shippers = [];
     connection.query('SELECT * FROM SHIPPING', function(err, results, fields) {
         if (err) {
