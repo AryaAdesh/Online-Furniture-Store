@@ -9,6 +9,7 @@ var app = express();
 var mysql = require('mysql');
 const { rename } = require('fs');
 const { render } = require('ejs');
+const flash = require('express-flash-notification');
 app.use(express.static(path.join(__dirname, 'assets')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -36,7 +37,7 @@ app.get('/register', function(req, res) {
     res.render('Register');
 });
 app.get('/login', function(req, res) {
-    res.render('Login');
+    res.render('Login', { isAdded: '' });
 });
 app.post('/', function(req, res) {
     var info = {
@@ -52,6 +53,24 @@ app.post('/', function(req, res) {
             });
         } else {
             res.render('index');
+        }
+    });
+});
+app.post('/about', function(req, res) {
+    var info = {
+        "name": req.body.Name,
+        "phone_number": req.body.phno,
+        "email": req.body.Email
+    };
+    connection.query('INSERT INTO NEWSLETTER SET ?', info, function(err, results, fields) {
+        if (err) {
+            console.log(err)
+            res.send({
+                "code": 100,
+                'failed': 'Data entry error'
+            });
+        } else {
+            res.render('about');
         }
     });
 });
@@ -95,13 +114,10 @@ app.post('/login', function(req, res) {
                     req.session.phone = phone;
                     res.redirect('products')
                 } else {
-                    res.render('new', { isAdded: true });
+                    res.render('Login', { isAdded: true });
                 }
             } else {
-                res.send({
-                    "code": 206,
-                    "success": "Email does not exits"
-                });
+                res.render('Register', { isAddedphno: true });
             }
         }
     });
@@ -211,11 +227,8 @@ app.get('/order', function(req, res) {
     }
 
 });
-app.get('/product/shipping', function(req, res) {
-    res.render('shipping');
-})
 
-app.get('/shippin', function(req, res) {
+app.get('/product/shipping', function(req, res) {
     var shippers = [];
     connection.query('SELECT * FROM SHIPPING', function(err, results, fields) {
         if (err) {
@@ -231,18 +244,32 @@ app.get('/shippin', function(req, res) {
                     "shipper": results[i].shippers_name
                 });
             }
-            console.log(shippers);
-            res.send({
-                'code': 601,
-                'Sucess': "Data Fetch Sucess"
-            });
+            res.render('shipping', { shippers: shippers })
         }
     });
 });
 
 app.get('/sucess', function(req, res) {
-    res.sendFile('sucess');
+    res.render('sucess');
 });
+
+app.post('/contact', function(req, res) {
+    var feedback = {
+        'name': req.body.name,
+        'email': req.body.email,
+        'feedback': req.body.message
+    };
+    connection.query('INSERT INTO FEEDBACK SET ?', feedback, function(results, fileds, errror) {
+        if (errror) {
+            res.send({
+                'code': 900,
+                'Failure': "Data entry unsucessfull"
+            });
+        } else {
+            res.render('contact');
+        }
+    })
+})
 
 app.use('*', function(req, res) {
     res.status(404).render('404Err');
