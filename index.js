@@ -1,6 +1,7 @@
 const port = 3000;
 var express = require('express');
 const bcrypt = require('bcrypt');
+const saltRounds = 10;
 var connection = require('./models/connection');
 var session = require('express-session');
 var bodyParser = require('body-parser');
@@ -76,8 +77,10 @@ app.post('/about', function(req, res) {
 });
 
 app.post('/register', async function(req, res) {
+    const salt = bcrypt.genSaltSync(saltRounds);
+    var password = bcrypt.hashSync(req.body.password, salt);
     var users = {
-        "Password": req.body.password,
+        "Password": password,
         "first_name": req.body.first,
         "last_name": req.body.last,
         "Street": req.body.street,
@@ -109,7 +112,7 @@ app.post('/login', function(req, res) {
             })
         } else {
             if (results.length > 0) {
-                if (password == results[0].Password) {
+                if (bcrypt.compareSync(password, results[0].Password)) {
                     req.session.loggedin = true;
                     req.session.phone = phone;
                     res.redirect('products')
