@@ -16,6 +16,7 @@
     "jquery": "^3.5.1",
     "jsonfile": "^6.1.0",
     "mysql": "^2.18.1",
+    "nodemon": "^2.0.7",
     "popper": "^1.0.1",
     "sweetalert": "^2.1.2"
   },
